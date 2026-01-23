@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TOKYO YOKAI SURVEILLANCE</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        @font-face {
+            font-family: 'Monitor';
+            src: local('SF Mono'), local('Menlo'), local('Monaco'), local('Consolas');
+        }
+
+        body {
+            background: #000;
+            color: #fff;
+            font-family: 'Monitor', 'SF Mono', 'Menlo', monospace;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        #map {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        /* Leaflet UI の完全非表示 */
+        .leaflet-control-zoom,
+        .leaflet-control-attribution {
+            display: none !important;
+        }
+
+        /* スキャンライン効果 */
+        .scanlines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(0, 0, 0, 0.03) 0px,
+                rgba(0, 0, 0, 0.03) 1px,
+                transparent 1px,
+                transparent 2px
+            );
+        }
+
+        /* ビネット効果 */
+        .vignette {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 999;
+            background: radial-gradient(
+                ellipse at center,
+                transparent 0%,
+                transparent 60%,
+                rgba(0, 0, 0, 0.4) 100%
+            );
+        }
+
+        /* ヘッダー - 極限まで控えめ */
+        .header {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 100;
+            opacity: 0.4;
+            transition: opacity 0.3s;
+        }
+
+        .header:hover {
+            opacity: 0.8;
+        }
+
+        .header-title {
+            font-size: 10px;
+            letter-spacing: 4px;
+            color: #666;
+            text-transform: uppercase;
+        }
+
+        .header-beta {
+            font-size: 9px;
+            color: #444;
+            margin-top: 2px;
+            letter-spacing: 1px;
+        }
+
+        /* 進捗表示 - 右上に小さく */
+        .progress {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+            text-align: right;
+            opacity: 0.5;
+        }
+
+        .progress-label {
+            font-size: 8px;
+            letter-spacing: 2px;
+            color: #444;
+            text-transform: uppercase;
+        }
+
+        .progress-count {
+            font-size: 14px;
+            color: #fff;
+            letter-spacing: 1px;
+            margin-top: 2px;
+        }
+
+        /* 情報パネル - 黒背景＋白文字のみ、浮かび上がる演出 */
+        .info-panel {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.95);
+            padding: 30px 40px;
+            transform: translateY(10px);
+            opacity: 0;
+            visibility: hidden;
+            transition: 
+                transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+                opacity 0.25s ease-out,
+                visibility 0.25s;
+            max-height: 50vh;
+            overflow-y: auto;
+        }
+
+        .info-panel.active {
+            transform: translateY(0);
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .info-panel-close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: #444;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 5px;
+            line-height: 1;
+        }
+
+        .info-panel-close:hover {
+            color: #fff;
+        }
+
+        .info-location {
+            font-size: 9px;
+            letter-spacing: 3px;
+            color: #444;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .info-name {
+            font-size: 24px;
+            font-weight: 300;
+            letter-spacing: 2px;
+            margin-bottom: 20px;
+            color: #fff;
+        }
+
+        .info-status {
+            display: inline-block;
+            font-size: 9px;
+            letter-spacing: 2px;
+            color: #666;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+        }
+
+        .info-description {
+            font-size: 13px;
+            line-height: 1.8;
+            color: #888;
+            max-width: 600px;
+        }
+
+        .info-character {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 1px solid #1a1a1a;
+        }
+
+        .info-character-label {
+            font-size: 9px;
+            letter-spacing: 2px;
+            color: #333;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .info-character-name {
+            font-size: 18px;
+            color: #fff;
+            margin-bottom: 5px;
+        }
+
+        .info-character-type {
+            font-size: 11px;
+            color: #555;
+            margin-bottom: 15px;
+        }
+
+        .info-character-principle {
+            font-size: 12px;
+            color: #666;
+            font-style: italic;
+            margin-bottom: 15px;
+        }
+
+        .info-character-story {
+            font-size: 12px;
+            line-height: 1.7;
+            color: #555;
+        }
+
+        .info-links {
+            margin-top: 25px;
+            display: flex;
+            gap: 20px;
+        }
+
+        .info-link {
+            font-size: 10px;
+            letter-spacing: 1px;
+            color: #444;
+            text-decoration: none;
+            text-transform: uppercase;
+            transition: color 0.2s;
+        }
+
+        .info-link:hover {
+            color: #fff;
+        }
+
+        /* 未登録エリア用 */
+        .info-unknown {
+            color: #333;
+        }
+
+        .info-unknown .info-name {
+            color: #444;
+        }
+
+        /* ナビゲーション - 左下に極小 */
+        .nav {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            z-index: 100;
+            display: flex;
+            gap: 20px;
+            opacity: 0.3;
+            transition: opacity 0.3s;
+        }
+
+        .nav:hover {
+            opacity: 0.8;
+        }
+
+        .nav a {
+            font-size: 9px;
+            letter-spacing: 2px;
+            color: #666;
+            text-decoration: none;
+            text-transform: uppercase;
+            transition: color 0.2s;
+        }
+
+        .nav a:hover {
+            color: #fff;
+        }
+
+        /* 発光点のスタイル */
+        .glow-marker {
+            position: relative;
+        }
+
+        /* unknown - 小さくぼんやり */
+        .glow-unknown {
+            width: 4px;
+            height: 4px;
+            background: radial-gradient(circle, rgba(60, 60, 60, 0.5) 0%, transparent 70%);
+            border-radius: 50%;
+            opacity: 0.3;
+        }
+
+        /* investigating - 脈動 */
+        .glow-investigating {
+            width: 8px;
+            height: 8px;
+            background: radial-gradient(circle, rgba(255, 180, 80, 0.9) 0%, rgba(255, 150, 50, 0.4) 40%, transparent 70%);
+            border-radius: 50%;
+            animation: pulse 2.5s ease-in-out infinite;
+            box-shadow: 0 0 15px rgba(255, 180, 80, 0.4);
+        }
+
+        .glow-investigating::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 25px;
+            height: 25px;
+            background: radial-gradient(circle, rgba(255, 180, 80, 0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: pulse 2.5s ease-in-out infinite;
+        }
+
+        /* confirmed - 輪が広がる光（2〜3秒で広がる） */
+        .glow-confirmed {
+            width: 5px;
+            height: 5px;
+            background: radial-gradient(circle, rgba(255, 255, 255, 1) 0%, rgba(200, 220, 255, 0.9) 30%, transparent 70%);
+            border-radius: 50%;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.5), 0 0 30px rgba(200, 220, 255, 0.2);
+        }
+
+        .glow-confirmed::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 30px;
+            height: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            animation: ripple 2.5s ease-out infinite;
+        }
+
+        .glow-confirmed::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 50px;
+            height: 50px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 50%;
+            animation: ripple-slow 3s ease-out infinite 1s;
+        }
+
+        /* investigating - ゆっくり明滅（opacity 0.4〜1.0） */
+        @keyframes pulse {
+            0%, 100% { opacity: 0.4; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.15); }
+        }
+
+        /* confirmed - 外側に薄いリングが2〜3秒で広がる */
+        @keyframes ripple {
+            0% { transform: translate(-50%, -50%) scale(0.2); opacity: 0.5; }
+            100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
+        }
+
+        @keyframes ripple-slow {
+            0% { transform: translate(-50%, -50%) scale(0.3); opacity: 0.4; }
+            100% { transform: translate(-50%, -50%) scale(2.5); opacity: 0; }
+        }
+
+        @keyframes flicker {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.85; }
+            75% { opacity: 0.95; }
+        }
+
+        /* パネル内コンテンツのフェードイン */
+        .info-panel .info-location,
+        .info-panel .info-name,
+        .info-panel .info-status,
+        .info-panel .info-description,
+        .info-panel .info-character,
+        .info-panel .info-links {
+            opacity: 0;
+            transform: translateY(5px);
+            transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+        }
+
+        .info-panel.active .info-location { transition-delay: 0.05s; opacity: 1; transform: translateY(0); }
+        .info-panel.active .info-name { transition-delay: 0.1s; opacity: 1; transform: translateY(0); }
+        .info-panel.active .info-status { transition-delay: 0.15s; opacity: 1; transform: translateY(0); }
+        .info-panel.active .info-description { transition-delay: 0.2s; opacity: 1; transform: translateY(0); }
+        .info-panel.active .info-character { transition-delay: 0.25s; opacity: 1; transform: translateY(0); }
+        .info-panel.active .info-links { transition-delay: 0.3s; opacity: 1; transform: translateY(0); }
+
+        /* 地図上のポリゴンスタイル用 */
+        .leaflet-interactive {
+            cursor: crosshair !important;
+        }
+
+        /* タイムスタンプ */
+        .timestamp {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 100;
+            font-size: 9px;
+            letter-spacing: 1px;
+            color: #333;
+            opacity: 0.5;
+        }
+
+        /* β表記 */
+        .beta-notice {
+            position: fixed;
+            bottom: 45px;
+            right: 20px;
+            z-index: 100;
+            text-align: right;
+            opacity: 0.3;
+        }
+
+        .beta-notice-text {
+            font-size: 8px;
+            letter-spacing: 1px;
+            color: #555;
+            font-style: italic;
+        }
+
+        /* リセットボタン */
+        .reset-btn {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            background: none;
+            border: none;
+            font-size: 8px;
+            letter-spacing: 2px;
+            color: #333;
+            cursor: pointer;
+            text-transform: uppercase;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .reset-btn:hover {
+            color: #666;
+            opacity: 1;
+        }
+
+        body:hover .reset-btn {
+            opacity: 0.3;
+        }
+    </style>
+</head>
+<body>
+    <div class="scanlines"></div>
+    <div class="vignette"></div>
+
+    <div class="header">
+        <div class="header-title">Tokyo Yokai Surveillance</div>
+        <div class="header-beta">β</div>
+    </div>
+
+    <div class="progress">
+        <div class="progress-label">Discovered</div>
+        <div class="progress-count"><span id="discovered">0</span> / <span id="total">??</span></div>
+    </div>
+
+    <button class="reset-btn" onclick="resetProgress()">Reset Data</button>
+
+    <div id="map"></div>
+
+    <div class="info-panel" id="info-panel">
+        <button class="info-panel-close" onclick="closePanel()">×</button>
+        <div id="info-content"></div>
+    </div>
+
+    <nav class="nav">
+        <a href="index.html">Index</a>
+        <a href="characters.html">Entities</a>
+        <a href="lore.html">Archive</a>
+    </nav>
+
+    <div class="beta-notice">
+        <div class="beta-notice-text">This world is still under construction.</div>
+    </div>
+
+    <div class="timestamp" id="timestamp"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // データ
+        const locations = {
+            "takao": {
+                id: "takao",
+                name: "高尾山",
+                nameEn: "Mt. Takao",
+                coords: [35.6251, 139.2435],
+                layer: "山・結界",
+                defaultStatus: "confirmed",
+                character: {
+                    name: "アカリ",
+                    type: "天狗（烏天狗）",
+                    role: "高尾山天狗衆・哨戒班長",
+                    principle: "空を護り、結界を守る",
+                    story: "高尾山天狗衆の若き哨戒班長。人間社会では山岳救助ボランティアとして活動し、遭難者の捜索や登山道の安全確認を行う。その鋭い目は空からの脅威を見逃さない。"
+                }
+            },
+            "azabujuban": {
+                id: "azabujuban",
+                name: "麻布十番",
+                nameEn: "Azabu-Juban",
+                coords: [35.6541, 139.7368],
+                layer: "街・生活",
+                defaultStatus: "confirmed",
+                character: {
+                    name: "光葉（みつは）",
+                    type: "狐（白狐）",
+                    role: "麻布稲荷の守護者・調停役",
+                    principle: "人と妖の境界を曖昧にして楽しむ",
+                    story: "港区の高級住宅街に佇む麻布稲荷神社を中心とした狐の領域。第三次妖怪大戦では人と妖の連合軍に参加し、九尾封印に貢献した。高尾山の天狗たちとは古い付き合いがあり、アカリの祖父とは戦友。"
+                }
+            },
+            "sumidagawa": {
+                id: "sumidagawa",
+                name: "隅田川",
+                nameEn: "Sumida River",
+                coords: [35.7147, 139.8015],
+                layer: "川・境界",
+                defaultStatus: "confirmed",
+                character: {
+                    name: "甲羅姫（スイ）",
+                    type: "河童",
+                    role: "隅田川水系の境界守護者",
+                    principle: "水の流れは止められない、されど導くことはできる",
+                    story: "隅田川を中心とした水系の境界を守護する河童。台東区から墨田区にかけての水辺は彼女の領域。人間社会では水上バスの船頭として働き、川の安全を見守る。"
+                }
+            }
+        };
+
+        // 区市町村データ
+        const areas = {
+            // 23区
+            "13101": { name: "千代田区", status: "investigating" },
+            "13102": { name: "中央区", status: "unknown" },
+            "13103": { name: "港区", status: "confirmed", linkedLocation: "azabujuban" },
+            "13104": { name: "新宿区", status: "investigating" },
+            "13105": { name: "文京区", status: "unknown" },
+            "13106": { name: "台東区", status: "confirmed", linkedLocation: "sumidagawa" },
+            "13107": { name: "墨田区", status: "unknown" },
+            "13108": { name: "江東区", status: "unknown" },
+            "13109": { name: "品川区", status: "unknown" },
+            "13110": { name: "目黒区", status: "unknown" },
+            "13111": { name: "大田区", status: "unknown" },
+            "13112": { name: "世田谷区", status: "unknown" },
+            "13113": { name: "渋谷区", status: "investigating" },
+            "13114": { name: "中野区", status: "unknown" },
+            "13115": { name: "杉並区", status: "unknown" },
+            "13116": { name: "豊島区", status: "unknown" },
+            "13117": { name: "北区", status: "unknown" },
+            "13118": { name: "荒川区", status: "unknown" },
+            "13119": { name: "板橋区", status: "unknown" },
+            "13120": { name: "練馬区", status: "unknown" },
+            "13121": { name: "足立区", status: "unknown" },
+            "13122": { name: "葛飾区", status: "unknown" },
+            "13123": { name: "江戸川区", status: "unknown" },
+            // 多摩地区
+            "13201": { name: "八王子市", status: "confirmed", linkedLocation: "takao" },
+            "13202": { name: "立川市", status: "unknown" },
+            "13203": { name: "武蔵野市", status: "unknown" },
+            "13204": { name: "三鷹市", status: "unknown" },
+            "13205": { name: "青梅市", status: "unknown" },
+            "13206": { name: "府中市", status: "unknown" },
+            "13207": { name: "昭島市", status: "unknown" },
+            "13208": { name: "調布市", status: "unknown" },
+            "13209": { name: "町田市", status: "unknown" },
+            "13210": { name: "小金井市", status: "unknown" },
+            "13211": { name: "小平市", status: "unknown" },
+            "13212": { name: "日野市", status: "unknown" },
+            "13213": { name: "東村山市", status: "unknown" },
+            "13214": { name: "国分寺市", status: "unknown" },
+            "13215": { name: "国立市", status: "unknown" },
+            "13218": { name: "福生市", status: "unknown" },
+            "13219": { name: "狛江市", status: "unknown" },
+            "13220": { name: "東大和市", status: "unknown" },
+            "13221": { name: "清瀬市", status: "unknown" },
+            "13222": { name: "東久留米市", status: "unknown" },
+            "13223": { name: "武蔵村山市", status: "unknown" },
+            "13224": { name: "多摩市", status: "unknown" },
+            "13225": { name: "稲城市", status: "unknown" }
+        };
+
+        // localStorage から状態を読み込み
+        function loadProgress() {
+            const saved = localStorage.getItem('yokai-surveillance-progress');
+            if (saved) {
+                const data = JSON.parse(saved);
+                Object.keys(data).forEach(key => {
+                    if (areas[key]) {
+                        areas[key].status = data[key];
+                    }
+                });
+            }
+        }
+
+        // localStorage に状態を保存
+        function saveProgress() {
+            const data = {};
+            Object.keys(areas).forEach(key => {
+                data[key] = areas[key].status;
+            });
+            localStorage.setItem('yokai-surveillance-progress', JSON.stringify(data));
+            updateProgressCount();
+        }
+
+        // 進捗リセット
+        function resetProgress() {
+            localStorage.removeItem('yokai-surveillance-progress');
+            location.reload();
+        }
+
+        // 進捗カウント更新（全体数は??のまま）
+        function updateProgressCount() {
+            const discovered = Object.values(areas).filter(a => a.status === 'confirmed').length;
+            document.getElementById('discovered').textContent = discovered;
+            // totalは??のまま（世界が積もっていく宣言）
+        }
+
+        // タイムスタンプ更新
+        function updateTimestamp() {
+            const now = new Date();
+            const str = now.toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+            document.getElementById('timestamp').textContent = str;
+        }
+
+        // 地図初期化
+        loadProgress();
+
+        const map = L.map('map', {
+            center: [35.68, 139.55],
+            zoom: 10,
+            zoomControl: false,
+            attributionControl: false,
+            minZoom: 9,
+            maxZoom: 14
+        });
+
+        // 極めて暗いベースマップ（ラベルなし）
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png', {
+            subdomains: 'abcd',
+            maxZoom: 20,
+            opacity: 0.12
+        }).addTo(map);
+
+        // GeoJSON スタイル
+        function getAreaStyle(status) {
+            const styles = {
+                unknown: {
+                    fillColor: '#000',
+                    fillOpacity: 0,
+                    color: '#1a1a1a',
+                    weight: 0.5,
+                    opacity: 0.3
+                },
+                investigating: {
+                    fillColor: '#332200',
+                    fillOpacity: 0.1,
+                    color: '#443300',
+                    weight: 0.5,
+                    opacity: 0.5
+                },
+                confirmed: {
+                    fillColor: '#111',
+                    fillOpacity: 0.05,
+                    color: '#333',
+                    weight: 0.5,
+                    opacity: 0.6
+                }
+            };
+            return styles[status] || styles.unknown;
+        }
+
+        // GeoJSON 読み込みと描画
+        let wardsLayer, tamaLayer;
+
+        Promise.all([
+            fetch('data/tokyo_23wards.geojson').then(r => r.json()),
+            fetch('data/tokyo_tama.geojson').then(r => r.json())
+        ]).then(([wards, tama]) => {
+            // 23区
+            wardsLayer = L.geoJSON(wards, {
+                style: feature => {
+                    const code = feature.properties.N03_007;
+                    const area = areas[code];
+                    return getAreaStyle(area ? area.status : 'unknown');
+                },
+                onEachFeature: (feature, layer) => {
+                    const code = feature.properties.N03_007;
+                    layer.on('click', () => showAreaInfo(code));
+                    layer.on('mouseover', () => {
+                        layer.setStyle({ fillOpacity: 0.15, color: '#444' });
+                    });
+                    layer.on('mouseout', () => {
+                        const area = areas[code];
+                        layer.setStyle(getAreaStyle(area ? area.status : 'unknown'));
+                    });
+                }
+            }).addTo(map);
+
+            // 多摩地区
+            tamaLayer = L.geoJSON(tama, {
+                style: feature => {
+                    const code = feature.properties.N03_007;
+                    const area = areas[code];
+                    return getAreaStyle(area ? area.status : 'unknown');
+                },
+                onEachFeature: (feature, layer) => {
+                    const code = feature.properties.N03_007;
+                    layer.on('click', () => showAreaInfo(code));
+                    layer.on('mouseover', () => {
+                        layer.setStyle({ fillOpacity: 0.15, color: '#444' });
+                    });
+                    layer.on('mouseout', () => {
+                        const area = areas[code];
+                        layer.setStyle(getAreaStyle(area ? area.status : 'unknown'));
+                    });
+                }
+            }).addTo(map);
+        });
+
+        // 発光点マーカー作成
+        function createGlowMarker(location) {
+            const status = location.defaultStatus;
+            const icon = L.divIcon({
+                className: 'glow-marker',
+                html: `<div class="glow-${status}"></div>`,
+                iconSize: [50, 50],
+                iconAnchor: [25, 25]
+            });
+
+            const marker = L.marker(location.coords, { icon }).addTo(map);
+            marker.on('click', () => showLocationInfo(location.id));
+            return marker;
+        }
+
+        // 主要地点のマーカー追加
+        Object.values(locations).forEach(loc => createGlowMarker(loc));
+
+        // エリア情報表示
+        function showAreaInfo(code) {
+            const area = areas[code];
+            if (!area) return;
+
+            // クリックで状態を進行（unknown → investigating → confirmed）
+            if (area.status === 'unknown') {
+                area.status = 'investigating';
+            } else if (area.status === 'investigating') {
+                area.status = 'confirmed';
+            }
+            saveProgress();
+
+            // リンクされた地点がある場合
+            if (area.linkedLocation) {
+                showLocationInfo(area.linkedLocation);
+                return;
+            }
+
+            const statusText = {
+                unknown: 'Uncharted',
+                investigating: 'Investigating',
+                confirmed: 'Confirmed'
+            };
+
+            const content = `
+                <div class="${area.status === 'unknown' ? 'info-unknown' : ''}">
+                    <div class="info-location">${code}</div>
+                    <div class="info-name">${area.name}</div>
+                    <div class="info-status">${statusText[area.status]}</div>
+                    <div class="info-description">
+                        ${area.status === 'confirmed' 
+                            ? 'このエリアの妖怪データは確認済みです。詳細な調査記録は準備中です。'
+                            : area.status === 'investigating'
+                            ? '調査進行中。妖怪の痕跡が検出されています。'
+                            : 'このエリアはまだ調査されていません。'}
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('info-content').innerHTML = content;
+            document.getElementById('info-panel').classList.add('active');
+
+            // レイヤースタイル更新
+            updateLayerStyles();
+        }
+
+        // 地点情報表示
+        function showLocationInfo(locationId) {
+            const loc = locations[locationId];
+            if (!loc) return;
+
+            const content = `
+                <div class="info-location">${loc.layer}</div>
+                <div class="info-name">${loc.name}</div>
+                <div class="info-status">Confirmed Entity</div>
+                
+                <div class="info-character">
+                    <div class="info-character-label">Guardian</div>
+                    <div class="info-character-name">${loc.character.name}</div>
+                    <div class="info-character-type">${loc.character.type} / ${loc.character.role}</div>
+                    <div class="info-character-principle">「${loc.character.principle}」</div>
+                    <div class="info-character-story">${loc.character.story}</div>
+                </div>
+
+                <div class="info-links">
+                    <a href="characters.html" class="info-link">View Entity Profile →</a>
+                    <a href="lore.html" class="info-link">Archive →</a>
+                </div>
+            `;
+
+            document.getElementById('info-content').innerHTML = content;
+            document.getElementById('info-panel').classList.add('active');
+        }
+
+        // パネルを閉じる
+        function closePanel() {
+            document.getElementById('info-panel').classList.remove('active');
+        }
+
+        // レイヤースタイル更新
+        function updateLayerStyles() {
+            if (wardsLayer) {
+                wardsLayer.eachLayer(layer => {
+                    const code = layer.feature.properties.N03_007;
+                    const area = areas[code];
+                    layer.setStyle(getAreaStyle(area ? area.status : 'unknown'));
+                });
+            }
+            if (tamaLayer) {
+                tamaLayer.eachLayer(layer => {
+                    const code = layer.feature.properties.N03_007;
+                    const area = areas[code];
+                    layer.setStyle(getAreaStyle(area ? area.status : 'unknown'));
+                });
+            }
+        }
+
+        // ESCキーでパネルを閉じる
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') closePanel();
+        });
+
+        // 初期化
+        updateProgressCount();
+        updateTimestamp();
+        setInterval(updateTimestamp, 1000);
+    </script>
+</body>
+</html>

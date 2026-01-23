@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>世界観 | 東京圏妖怪マッピングβ</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&family=Shippori+Mincho:wght@500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="css/style.css">
+  
+  <style>
+    .page-header {
+      text-align: center;
+      padding: var(--spacing-2xl) var(--spacing-lg);
+      background: var(--bg-secondary);
+    }
+    
+    .page-title {
+      font-family: var(--font-title);
+      font-size: 2.5rem;
+      margin-bottom: var(--spacing-md);
+    }
+    
+    .page-subtitle {
+      color: var(--text-secondary);
+      font-size: 1.1rem;
+      max-width: 700px;
+      margin: 0 auto;
+      line-height: 1.8;
+    }
+    
+    .beta-notice-box {
+      margin-top: var(--spacing-lg);
+      padding: var(--spacing-md) var(--spacing-lg);
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      display: inline-block;
+    }
+    
+    .beta-tag {
+      display: inline-block;
+      font-size: 0.7rem;
+      letter-spacing: 2px;
+      color: var(--accent-gold);
+      text-transform: uppercase;
+      margin-bottom: var(--spacing-xs);
+    }
+    
+    .beta-notice-box p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin: 0;
+    }
+    
+    .lore-section {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: var(--spacing-2xl) var(--spacing-lg);
+    }
+    
+    .layers-overview {
+      margin-bottom: var(--spacing-2xl);
+    }
+    
+    .layers-title {
+      font-family: var(--font-title);
+      font-size: 1.8rem;
+      text-align: center;
+      margin-bottom: var(--spacing-lg);
+    }
+    
+    .layers-intro {
+      text-align: center;
+      color: var(--text-secondary);
+      margin-bottom: var(--spacing-xl);
+      line-height: 1.8;
+    }
+    
+    .layers-diagram {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-md);
+      margin-bottom: var(--spacing-xl);
+    }
+    
+    .layer-card {
+      display: grid;
+      grid-template-columns: 80px 1fr;
+      gap: var(--spacing-lg);
+      padding: var(--spacing-lg);
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      transition: all 0.3s ease;
+    }
+    
+    .layer-card:hover {
+      transform: translateX(8px);
+    }
+    
+    .layer-card[data-layer="山"] {
+      border-left: 5px solid #2C3E50;
+    }
+    
+    .layer-card[data-layer="街"] {
+      border-left: 5px solid #E74C3C;
+    }
+    
+    .layer-card[data-layer="川"] {
+      border-left: 5px solid #3498DB;
+    }
+    
+    .layer-icon {
+      font-size: 3rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .layer-content h3 {
+      font-family: var(--font-title);
+      font-size: 1.4rem;
+      margin-bottom: var(--spacing-xs);
+    }
+    
+    .layer-concept {
+      font-size: 0.9rem;
+      color: var(--accent-gold);
+      margin-bottom: var(--spacing-sm);
+    }
+    
+    .layer-desc {
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      margin-bottom: var(--spacing-sm);
+    }
+    
+    .layer-guardian {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      background: var(--bg-secondary);
+      border-radius: 20px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+    
+    .worldview-section {
+      margin-top: var(--spacing-2xl);
+      padding-top: var(--spacing-2xl);
+      border-top: 1px solid var(--border-color);
+    }
+    
+    .worldview-title {
+      font-family: var(--font-title);
+      font-size: 1.5rem;
+      margin-bottom: var(--spacing-lg);
+      text-align: center;
+    }
+    
+    .concepts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: var(--spacing-lg);
+    }
+    
+    .concept-card {
+      padding: var(--spacing-lg);
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+    }
+    
+    .concept-card h4 {
+      font-family: var(--font-title);
+      font-size: 1.1rem;
+      margin-bottom: var(--spacing-sm);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .concept-card p {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+    
+    .glossary-section {
+      margin-top: var(--spacing-2xl);
+      padding-top: var(--spacing-2xl);
+      border-top: 1px solid var(--border-color);
+    }
+    
+    .glossary-title {
+      font-family: var(--font-title);
+      font-size: 1.5rem;
+      margin-bottom: var(--spacing-lg);
+      text-align: center;
+    }
+    
+    .glossary-list {
+      display: grid;
+      gap: var(--spacing-md);
+    }
+    
+    .glossary-item {
+      display: grid;
+      grid-template-columns: 120px 1fr;
+      gap: var(--spacing-md);
+      padding: var(--spacing-md);
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+    }
+    
+    .glossary-term {
+      font-family: var(--font-title);
+      font-size: 1rem;
+      color: var(--accent-gold);
+    }
+    
+    .glossary-reading {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+    
+    .glossary-def {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+    
+    .factions-section {
+      margin-top: var(--spacing-2xl);
+      padding-top: var(--spacing-2xl);
+      border-top: 1px solid var(--border-color);
+    }
+    
+    .factions-title {
+      font-family: var(--font-title);
+      font-size: 1.5rem;
+      margin-bottom: var(--spacing-lg);
+      text-align: center;
+    }
+    
+    .factions-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: var(--spacing-lg);
+    }
+    
+    .faction-card {
+      padding: var(--spacing-lg);
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+    }
+    
+    .faction-header {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+      margin-bottom: var(--spacing-md);
+    }
+    
+    .faction-icon {
+      font-size: 2rem;
+      width: 50px;
+      height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-sm);
+    }
+    
+    .faction-name {
+      font-family: var(--font-title);
+      font-size: 1.2rem;
+    }
+    
+    .faction-role {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    
+    .faction-desc {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+    
+    @media (max-width: 768px) {
+      .layer-card {
+        grid-template-columns: 1fr;
+        text-align: center;
+      }
+      
+      .glossary-item {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- ヘッダー -->
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="index.html" class="site-logo">
+        <span class="logo-icon">👹</span>
+        <h1>東京百鬼パレード</h1>
+      </a>
+      <nav class="main-nav">
+        <ul>
+          <li><a href="index.html">トップ</a></li>
+          <li><a href="map.html">マップ</a></li>
+          <li><a href="characters.html">キャラクター</a></li>
+          <li><a href="lore.html" class="active">世界観</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <!-- メインコンテンツ -->
+  <main class="main-content">
+    <div class="page-header">
+      <h1 class="page-title">📜 世界観</h1>
+      <p class="page-subtitle">
+        東京には3つのレイヤーがある。<br>
+        <strong>山</strong>は結界を守り、<strong>街</strong>は生活を営み、<strong>川</strong>は境界を流れる。<br>
+        人と妖が重なり合う、もうひとつの東京の見取り図。
+      </p>
+      <div class="beta-notice-box">
+        <span class="beta-tag">β Version</span>
+        <p>This world is still under construction.<br>設定は確定次第、順次マップへ反映されます。</p>
+      </div>
+    </div>
+    
+    <section class="lore-section">
+      <!-- 3レイヤー見取り図 -->
+      <div class="layers-overview">
+        <h2 class="layers-title">🗺️ 東京の3つのレイヤー</h2>
+        <p class="layers-intro">
+          東京圏には、人間には見えない「妖怪レイヤー」が存在する。<br>
+          それは地理的な区分であると同時に、世界の構造を支える機能でもある。
+        </p>
+        
+        <div class="layers-diagram">
+          <div class="layer-card" id="layer-山" data-layer="山">
+            <div class="layer-icon">🏔️</div>
+            <div class="layer-content">
+              <h3>山（やま）</h3>
+              <div class="layer-concept">結界 ——「守る」レイヤー</div>
+              <p class="layer-desc">
+                山は結界の要。高尾山を筆頭に、東京圏の霊山は妖怪世界と人間世界を隔てる壁であり、同時に両者を繋ぐ門でもある。天狗たちは空から結界を監視し、侵入者を排除する。山の霊気は妖怪の力の源であり、ここが乱れれば東京全体の均衡が崩れる。
+              </p>
+              <span class="layer-guardian">🦅 守護者：アカリ（高尾山烏天狗）</span>
+            </div>
+          </div>
+          
+          <div class="layer-card" id="layer-街" data-layer="街">
+            <div class="layer-icon">🏙️</div>
+            <div class="layer-content">
+              <h3>街（まち）</h3>
+              <div class="layer-concept">生活 ——「交わる」レイヤー</div>
+              <p class="layer-desc">
+                街は生活の場。人間と妖怪が最も近接し、時に混じり合う領域。麻布の狐たちは人間社会に溶け込み、祭りや商売を通じて共存の道を探る。境界は曖昧だが、それゆえに摩擦も生まれる。人と妖の関係が最も複雑に絡み合う、東京の「表層」。
+              </p>
+              <span class="layer-guardian">🦊 守護者：光葉（麻布狐）</span>
+            </div>
+          </div>
+          
+          <div class="layer-card" id="layer-川" data-layer="川">
+            <div class="layer-icon">🌊</div>
+            <div class="layer-content">
+              <h3>川（かわ）</h3>
+              <div class="layer-concept">境界 ——「流れる」レイヤー</div>
+              <p class="layer-desc">
+                川は境界そのもの。水は生と死、此岸と彼岸を分かつ。隅田川の水虎たちは、水脈を通じて東京全域の「流れ」——人の流れ、気の流れ、情報の流れ——を感知し、均衡を保つ。水は命を与え、奪う。その二面性を司るのが川のレイヤー。
+              </p>
+              <span class="layer-guardian">🐢 守護者：甲羅姫（隅田川水虎）</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 世界観の基本概念 -->
+      <div class="worldview-section">
+        <h2 class="worldview-title">⚙️ 世界の仕組み</h2>
+        <div class="concepts-grid">
+          <div class="concept-card">
+            <h4>📿 理（ことわり）</h4>
+            <p>
+              妖怪が持つ行動原理・信念。「理を破る者は斬る」「人と妖の境界を曖昧にする」など、各妖怪の存在意義を示す。理に反する行動は、妖怪にとって自己否定に等しい。
+            </p>
+          </div>
+          <div class="concept-card">
+            <h4>🔮 勤（つとめ）</h4>
+            <p>
+              妖怪が社会で担う役割・仕事。結界の維持、水脈の監視、人間社会との調整など。勤を果たすことで妖怪は存在意義を保ち、力を維持する。
+            </p>
+          </div>
+          <div class="concept-card">
+            <h4>⚡ 源（みなもと）</h4>
+            <p>
+              妖怪の力の源泉。山の霊気、人々の祈り、水分子など。源が絶たれると妖怪は弱体化し、最悪の場合は消滅する。近代化は多くの妖怪の源を脅かしている。
+            </p>
+          </div>
+          <div class="concept-card">
+            <h4>🛡️ 結界</h4>
+            <p>
+              人間界と妖怪界を隔てる見えない壁。高尾山を中心に東京圏を覆う。結界が弱まると「異界」が漏れ出し、怪異が頻発する。天狗たちの最重要任務。
+            </p>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 勢力 -->
+      <div class="factions-section">
+        <h2 class="factions-title">🏯 主要勢力</h2>
+        <div class="factions-grid">
+          <div class="faction-card">
+            <div class="faction-header">
+              <div class="faction-icon">🦅</div>
+              <div>
+                <div class="faction-name">高尾山烏天狗</div>
+                <div class="faction-role">結界維持・防衛</div>
+              </div>
+            </div>
+            <p class="faction-desc">
+              高尾山を本拠とする天狗の一族。関東一帯の結界を維持し、侵入者を排除する「空の守護者」。秩序と規律を重んじ、他勢力とは一定の距離を保つ。アカリはその若手戦闘員。
+            </p>
+          </div>
+          <div class="faction-card">
+            <div class="faction-header">
+              <div class="faction-icon">🦊</div>
+              <div>
+                <div class="faction-name">麻布狐</div>
+                <div class="faction-role">調停・情報</div>
+              </div>
+            </div>
+            <p class="faction-desc">
+              港区麻布を中心に活動する狐の一族。人間社会に最も溶け込み、各勢力間の調停役を担う。九尾・珠姫の影響下にあるとも言われるが、真相は不明。光葉は麻布稲荷の守護者。
+            </p>
+          </div>
+          <div class="faction-card">
+            <div class="faction-header">
+              <div class="faction-icon">🐢</div>
+              <div>
+                <div class="faction-name">隅田川水虎一族</div>
+                <div class="faction-role">水脈管理・均衡維持</div>
+              </div>
+            </div>
+            <p class="faction-desc">
+              隅田川を統べる水虎（河童の上位種）の一族。水脈を通じて東京全域の「流れ」を感知し、均衡を保つ。近代化で力を削がれたが、科学を学ぶことで適応を図る。甲羅姫はその姫。
+            </p>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 用語集 -->
+      <div class="glossary-section">
+        <h2 class="glossary-title">📖 用語集</h2>
+        <div class="glossary-list">
+          <div class="glossary-item">
+            <div>
+              <div class="glossary-term">妖怪大戦</div>
+              <div class="glossary-reading">ようかいたいせん</div>
+            </div>
+            <div class="glossary-def">
+              過去に三度起きた、人間と妖怪の大規模な衝突。第三次妖怪大戦では人と妖の連合軍が九尾を封印した。この戦いの記憶が、現在の共存体制の基盤となっている。
+            </div>
+          </div>
+          <div class="glossary-item">
+            <div>
+              <div class="glossary-term">九尾</div>
+              <div class="glossary-reading">きゅうび</div>
+            </div>
+            <div class="glossary-def">
+              最強クラスの妖怪。第三次妖怪大戦で封印されたが、「東京のどこかにいる」と噂される。珠姫（たまき）という名の九尾が麻布狐に影響を与えているとも。
+            </div>
+          </div>
+          <div class="glossary-item">
+            <div>
+              <div class="glossary-term">半妖</div>
+              <div class="glossary-reading">はんよう</div>
+            </div>
+            <div class="glossary-def">
+              人間と妖怪の間に生まれた存在。両方の世界に属しながら、どちらにも完全には受け入れられない。近年増加傾向にあり、社会問題化しつつある。
+            </div>
+          </div>
+          <div class="glossary-item">
+            <div>
+              <div class="glossary-term">異界</div>
+              <div class="glossary-reading">いかい</div>
+            </div>
+            <div class="glossary-def">
+              人間界とは異なる法則で動く世界。結界が弱まると「漏れ出し」、怪異現象を引き起こす。完全に異界に呑まれた場所は「神隠し」として処理される。
+            </div>
+          </div>
+          <div class="glossary-item">
+            <div>
+              <div class="glossary-term">土御門家</div>
+              <div class="glossary-reading">つちみかどけ</div>
+            </div>
+            <div class="glossary-def">
+              陰陽道を継承する人間の名家。結界の維持を妖怪と共同で行う。政府との繋がりを持ち、妖怪社会と人間社会の橋渡し役を担う。
+            </div>
+          </div>
+          <div class="glossary-item">
+            <div>
+              <div class="glossary-term">鼠会</div>
+              <div class="glossary-reading">ねずみかい</div>
+            </div>
+            <div class="glossary-def">
+              地下鉄・下水道を拠点とする鼠妖怪のネットワーク。物流と情報を握り、表の勢力とは異なる「裏の秩序」を維持する。どの勢力とも取引する中立的存在。
+            </div>
+          </div>
+          <div class="glossary-item">
+            <div>
+              <div class="glossary-term">女郎衆</div>
+              <div class="glossary-reading">じょろうしゅう</div>
+            </div>
+            <div class="glossary-def">
+              港区を中心に活動する女性妖怪のネットワーク。夜の街を仕切り、情報と人脈を武器とする。九尾・珠姫の影響下にあるとされる。
+            </div>
+          </div>
+          <div class="glossary-item">
+            <div>
+              <div class="glossary-term">付喪神</div>
+              <div class="glossary-reading">つくもがみ</div>
+            </div>
+            <div class="glossary-def">
+              長く使われた道具が魂を宿した妖怪。近代では家電や機械が付喪神化するケースも。人間に最も近い妖怪として、橋渡し役を担うことが多い。
+            </div>
+          </div>
+          <div class="glossary-item">
+            <div>
+              <div class="glossary-term">霊脈</div>
+              <div class="glossary-reading">れいみゃく</div>
+            </div>
+            <div class="glossary-def">
+              地中を流れる霊的なエネルギーの流れ。水脈と重なることが多く、妖怪の力の源となる。都市開発により寸断されると、その土地の妖怪は弱体化する。
+            </div>
+          </div>
+          <div class="glossary-item">
+            <div>
+              <div class="glossary-term">神隠し</div>
+              <div class="glossary-reading">かみかくし</div>
+            </div>
+            <div class="glossary-def">
+              人間が異界に呑まれて行方不明になる現象。公式には「失踪」として処理されるが、妖怪社会では深刻な問題として認識されている。
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- フッター -->
+  <footer class="site-footer">
+    <div class="footer-content">
+      <div class="footer-title">東京百鬼パレード</div>
+      <div class="footer-links">
+        <a href="map.html">マップ</a>
+        <a href="characters.html">キャラクター</a>
+        <a href="lore.html">世界観</a>
+        <a href="#">制作ログ（Notion）</a>
+      </div>
+      <div class="footer-copyright">
+        © 2026 東京百鬼パレード Project
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // ハッシュがあればスクロール
+    if (window.location.hash) {
+      const targetId = window.location.hash.slice(1);
+      setTimeout(() => {
+        const target = document.getElementById(targetId);
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 100);
+    }
+  </script>
+</body>
+</html>

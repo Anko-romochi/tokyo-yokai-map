@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>東京百鬼パレード | Tokyo Hyakki Parade</title>
+  <meta name="description" content="東京圏に潜む妖怪たちの物語。マップを探索し、山・街・川の3つのレイヤーを巡ろう。">
+  
+  <!-- OGP -->
+  <meta property="og:title" content="東京百鬼パレード">
+  <meta property="og:description" content="東京圏に潜む妖怪たちの物語。マップを探索し、山・街・川の3つのレイヤーを巡ろう。">
+  <meta property="og:type" content="website">
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&family=Shippori+Mincho:wght@500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="css/style.css">
+  
+  <style>
+    .hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: var(--spacing-2xl);
+      overflow: hidden;
+    }
+    
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: 
+        radial-gradient(ellipse at 20% 80%, rgba(44, 62, 80, 0.2) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 20%, rgba(231, 76, 60, 0.15) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 50%, rgba(52, 152, 219, 0.1) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    
+    .hero-content {
+      position: relative;
+      z-index: 1;
+      max-width: 800px;
+    }
+    
+    .hero-icon {
+      font-size: 5rem;
+      margin-bottom: var(--spacing-lg);
+      animation: float 3s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+    
+    .hero-title {
+      font-family: var(--font-title);
+      font-size: 3.5rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      margin-bottom: var(--spacing-md);
+      background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent-gold) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .hero-subtitle {
+      font-family: var(--font-title);
+      font-size: 1.5rem;
+      color: var(--text-secondary);
+      margin-bottom: var(--spacing-xl);
+      letter-spacing: 0.3em;
+    }
+    
+    .hero-tagline {
+      font-size: 1.1rem;
+      color: var(--text-secondary);
+      line-height: 1.8;
+      margin-bottom: var(--spacing-2xl);
+    }
+    
+    .hero-cta {
+      display: flex;
+      gap: var(--spacing-md);
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      padding: var(--spacing-md) var(--spacing-xl);
+      border-radius: var(--radius-md);
+      font-size: 1rem;
+      font-weight: 500;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent-gold) 0%, #b8962e 100%);
+      color: var(--bg-primary);
+      border: none;
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(212, 175, 55, 0.3);
+      color: var(--bg-primary);
+    }
+    
+    .btn-secondary {
+      background: transparent;
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+    }
+    
+    .btn-secondary:hover {
+      border-color: var(--accent-gold);
+      color: var(--accent-gold);
+    }
+    
+    /* 3レイヤーセクション */
+    .layers-section {
+      padding: var(--spacing-2xl) var(--spacing-lg);
+      background: var(--bg-secondary);
+    }
+    
+    .layers-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    .layers-title {
+      font-family: var(--font-title);
+      font-size: 2rem;
+      text-align: center;
+      margin-bottom: var(--spacing-lg);
+    }
+    
+    .layers-intro {
+      text-align: center;
+      color: var(--text-secondary);
+      margin-bottom: var(--spacing-xl);
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    
+    .layers-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--spacing-lg);
+    }
+    
+    .layer-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: var(--spacing-xl);
+      text-align: center;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .layer-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+    }
+    
+    .layer-card[data-layer="山"]::before {
+      background: #2C3E50;
+    }
+    
+    .layer-card[data-layer="街"]::before {
+      background: #E74C3C;
+    }
+    
+    .layer-card[data-layer="川"]::before {
+      background: #3498DB;
+    }
+    
+    .layer-card:hover {
+      transform: translateY(-8px);
+      border-color: var(--accent-gold);
+    }
+    
+    .layer-icon {
+      font-size: 3.5rem;
+      margin-bottom: var(--spacing-md);
+    }
+    
+    .layer-name {
+      font-family: var(--font-title);
+      font-size: 1.5rem;
+      margin-bottom: var(--spacing-xs);
+    }
+    
+    .layer-concept {
+      font-size: 0.9rem;
+      color: var(--accent-gold);
+      margin-bottom: var(--spacing-md);
+    }
+    
+    .layer-desc {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: var(--spacing-md);
+    }
+    
+    .layer-guardian {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: var(--spacing-sm) var(--spacing-md);
+      background: var(--bg-secondary);
+      border-radius: 20px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+    
+    /* キャラクタープレビュー */
+    .characters-section {
+      padding: var(--spacing-2xl) var(--spacing-lg);
+    }
+    
+    .characters-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    .characters-title {
+      font-family: var(--font-title);
+      font-size: 2rem;
+      text-align: center;
+      margin-bottom: var(--spacing-xl);
+    }
+    
+    .characters-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--spacing-lg);
+    }
+    
+    .character-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: var(--spacing-xl);
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+    
+    .character-card:hover {
+      border-color: var(--accent-gold);
+      transform: translateY(-4px);
+    }
+    
+    .character-icon {
+      font-size: 4rem;
+      width: 100px;
+      height: 100px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto var(--spacing-md);
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg);
+    }
+    
+    .character-name {
+      font-family: var(--font-title);
+      font-size: 1.3rem;
+      margin-bottom: var(--spacing-xs);
+    }
+    
+    .character-species {
+      font-size: 0.85rem;
+      color: var(--accent-gold);
+      margin-bottom: var(--spacing-sm);
+    }
+    
+    .character-kotowari {
+      font-family: var(--font-title);
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      font-style: italic;
+      margin-bottom: var(--spacing-md);
+    }
+    
+    .character-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.85rem;
+      color: var(--accent-gold);
+    }
+    
+    /* β版バナー */
+    .beta-banner {
+      position: fixed;
+      top: 100px;
+      right: -40px;
+      background: var(--accent-gold);
+      color: var(--bg-primary);
+      padding: 8px 50px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      transform: rotate(45deg);
+      z-index: 100;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    }
+    
+    @media (max-width: 768px) {
+      .hero-title {
+        font-size: 2.5rem;
+      }
+      
+      .hero-subtitle {
+        font-size: 1.2rem;
+      }
+      
+      .layers-grid,
+      .characters-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .beta-banner {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- β版バナー -->
+  <div class="beta-banner">β版</div>
+
+  <!-- ヘッダー -->
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="index.html" class="site-logo">
+        <span class="logo-icon">👹</span>
+        <h1>東京百鬼パレード</h1>
+      </a>
+      <nav class="main-nav">
+        <ul>
+          <li><a href="index.html" class="active">トップ</a></li>
+          <li><a href="map.html">マップ</a></li>
+          <li><a href="characters.html">キャラクター</a></li>
+          <li><a href="lore.html">世界観</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ヒーロー -->
+  <section class="hero">
+    <div class="hero-content">
+      <div class="hero-icon">👹</div>
+      <h1 class="hero-title">東京百鬼パレード</h1>
+      <p class="hero-subtitle">TOKYO HYAKKI PARADE</p>
+      <p class="hero-tagline">
+        東京圏に潜む妖怪たちの物語。<br>
+        <strong>山</strong>は結界を守り、<strong>街</strong>は生活を営み、<strong>川</strong>は境界を流れる。<br>
+        <span style="color: var(--accent-gold);">——東京が妖怪レイヤーを持って見える——</span>
+      </p>
+      <div class="hero-cta">
+        <a href="map.html" class="btn btn-primary">
+          🗺️ マップを探索
+        </a>
+        <a href="characters.html" class="btn btn-secondary">
+          👤 キャラクター
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3レイヤー -->
+  <section class="layers-section">
+    <div class="layers-inner">
+      <h2 class="layers-title">🗺️ 東京の3つのレイヤー</h2>
+      <p class="layers-intro">
+        東京圏には、人間には見えない「妖怪レイヤー」が存在する。<br>
+        3つの地点から、その世界を覗いてみよう。
+      </p>
+      
+      <div class="layers-grid">
+        <div class="layer-card" data-layer="山">
+          <div class="layer-icon">🏔️</div>
+          <h3 class="layer-name">山</h3>
+          <div class="layer-concept">結界 ——「守る」レイヤー</div>
+          <p class="layer-desc">
+            高尾山を筆頭に、霊山は妖怪世界と人間世界を隔てる壁であり、同時に両者を繋ぐ門でもある。
+          </p>
+          <div class="layer-guardian">
+            🦅 守護者：アカリ
+          </div>
+        </div>
+        
+        <div class="layer-card" data-layer="街">
+          <div class="layer-icon">🏙️</div>
+          <h3 class="layer-name">街</h3>
+          <div class="layer-concept">生活 ——「交わる」レイヤー</div>
+          <p class="layer-desc">
+            人間と妖怪が最も近接し、時に混じり合う領域。麻布の狐たちは人間社会に溶け込む。
+          </p>
+          <div class="layer-guardian">
+            🦊 守護者：光葉
+          </div>
+        </div>
+        
+        <div class="layer-card" data-layer="川">
+          <div class="layer-icon">🌊</div>
+          <h3 class="layer-name">川</h3>
+          <div class="layer-concept">境界 ——「流れる」レイヤー</div>
+          <p class="layer-desc">
+            水は生と死、此岸と彼岸を分かつ。隅田川の水虎たちは「流れ」を感知し、均衡を保つ。
+          </p>
+          <div class="layer-guardian">
+            🐢 守護者：甲羅姫
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- キャラクター -->
+  <section class="characters-section">
+    <div class="characters-inner">
+      <h2 class="characters-title">👤 3人の守護者</h2>
+      
+      <div class="characters-grid">
+        <div class="character-card">
+          <div class="character-icon">🦅</div>
+          <h3 class="character-name">アカリ</h3>
+          <div class="character-species">烏天狗 / 高尾山</div>
+          <p class="character-kotowari">「理を破る者は人でも妖でも斬る」</p>
+          <a href="characters.html#akari" class="character-link">詳細を見る →</a>
+        </div>
+        
+        <div class="character-card">
+          <div class="character-icon">🦊</div>
+          <h3 class="character-name">光葉</h3>
+          <div class="character-species">白狐 / 麻布十番</div>
+          <p class="character-kotowari">「人と妖の境界を曖昧にして楽しむ」</p>
+          <a href="characters.html#mitsuha" class="character-link">詳細を見る →</a>
+        </div>
+        
+        <div class="character-card">
+          <div class="character-icon">🐢</div>
+          <h3 class="character-name">甲羅姫（スイ）</h3>
+          <div class="character-species">水虎 / 隅田川</div>
+          <p class="character-kotowari">「水は命を与え、奪う。その均衡だけが真実」</p>
+          <a href="characters.html#sui" class="character-link">詳細を見る →</a>
+        </div>
+      </div>
+      
+      <div style="text-align: center; margin-top: var(--spacing-xl);">
+        <a href="characters.html" class="btn btn-secondary">
+          すべてのキャラクターを見る →
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- フッター -->
+  <footer class="site-footer">
+    <div class="footer-content">
+      <div class="footer-title">東京百鬼パレード</div>
+      <div class="footer-links">
+        <a href="map.html">マップ</a>
+        <a href="characters.html">キャラクター</a>
+        <a href="lore.html">世界観</a>
+        <a href="#">制作ログ（Notion）</a>
+      </div>
+      <div class="footer-copyright">
+        © 2026 東京百鬼パレード Project | β版
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>妖怪一覧 | 東京百鬼パレード</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&family=Shippori+Mincho:wght@500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="css/style.css">
+  
+  <style>
+    /* 妖怪カード専用スタイル */
+    .yokai-card {
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .yokai-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: var(--card-accent, var(--accent-gold));
+    }
+    
+    .yokai-header {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--spacing-md);
+      margin-bottom: var(--spacing-md);
+    }
+    
+    .yokai-icon {
+      font-size: 2.5rem;
+      width: 60px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-md);
+      flex-shrink: 0;
+    }
+    
+    .yokai-title-group {
+      flex: 1;
+    }
+    
+    .yokai-name {
+      font-family: var(--font-title);
+      font-size: 1.4rem;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+    
+    .yokai-reading {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+    
+    .yokai-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--spacing-sm);
+      margin-bottom: var(--spacing-md);
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+    
+    .yokai-meta-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    
+    .yokai-summary {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      line-height: 1.6;
+      margin-bottom: var(--spacing-md);
+    }
+    
+    .yokai-kotowari {
+      font-family: var(--font-title);
+      font-size: 0.95rem;
+      color: var(--accent-gold);
+      padding: var(--spacing-sm) var(--spacing-md);
+      background: rgba(212, 175, 55, 0.1);
+      border-left: 3px solid var(--accent-gold);
+      margin-bottom: var(--spacing-md);
+    }
+    
+    .yokai-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--spacing-sm);
+      margin-bottom: var(--spacing-md);
+    }
+    
+    .stat-item {
+      text-align: center;
+      padding: var(--spacing-sm);
+      background: var(--bg-secondary);
+      border-radius: var(--radius-sm);
+    }
+    
+    .stat-label {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+    
+    .stat-value {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    
+    .yokai-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.85rem;
+      color: var(--accent-gold);
+      margin-top: var(--spacing-sm);
+    }
+    
+    /* フィルター結果カウント */
+    .result-count {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-bottom: var(--spacing-md);
+    }
+    
+    /* 空状態 */
+    .empty-state {
+      text-align: center;
+      padding: var(--spacing-2xl);
+      color: var(--text-muted);
+    }
+    
+    .empty-state-icon {
+      font-size: 3rem;
+      margin-bottom: var(--spacing-md);
+    }
+  </style>
+</head>
+<body>
+  <!-- ヘッダー -->
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="index.html" class="site-logo">
+        <span class="logo-icon">👹</span>
+        <h1>東京百鬼パレード</h1>
+      </a>
+      <nav class="main-nav">
+        <ul>
+          <li><a href="index.html">トップ</a></li>
+          <li><a href="map.html">マップ</a></li>
+          <li><a href="yokai.html" class="active">妖怪一覧</a></li>
+          <li><a href="lore.html">世界観</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <!-- メインコンテンツ -->
+  <main class="main-content">
+    <div class="container">
+      <h1 class="page-title">
+        <span class="icon">👹</span>
+        妖怪一覧
+      </h1>
+      
+      <!-- フィルターバー -->
+      <div class="filter-bar">
+        <div class="filter-group">
+          <label class="filter-label">区域:</label>
+          <select class="filter-select" id="filter-ward">
+            <option value="">すべて</option>
+          </select>
+        </div>
+        
+        <div class="filter-group">
+          <label class="filter-label">勢力:</label>
+          <select class="filter-select" id="filter-clan">
+            <option value="">すべて</option>
+          </select>
+        </div>
+        
+        <div class="filter-group">
+          <label class="filter-label">役割:</label>
+          <select class="filter-select" id="filter-role">
+            <option value="">すべて</option>
+            <option value="boundary">境界維持系</option>
+            <option value="ritual">儀式・感情循環系</option>
+            <option value="industry">産業寄生系</option>
+            <option value="underworld">裏社会統治系</option>
+            <option value="sealing">封印・災害管理系</option>
+          </select>
+        </div>
+        
+        <input type="text" class="search-input" id="search-input" placeholder="名前・種族で検索...">
+      </div>
+      
+      <!-- 結果カウント -->
+      <div class="result-count" id="result-count"></div>
+      
+      <!-- カードグリッド -->
+      <div class="card-grid" id="yokai-grid">
+        <!-- JSで動的生成 -->
+      </div>
+      
+      <!-- 空状態 -->
+      <div class="empty-state" id="empty-state" style="display: none;">
+        <div class="empty-state-icon">🔍</div>
+        <p>条件に一致する妖怪が見つかりませんでした</p>
+      </div>
+    </div>
+  </main>
+
+  <!-- フッター -->
+  <footer class="site-footer">
+    <div class="footer-content">
+      <div class="footer-title">東京百鬼パレード</div>
+      <div class="footer-links">
+        <a href="map.html">マップ</a>
+        <a href="yokai.html">妖怪一覧</a>
+        <a href="lore.html">世界観</a>
+        <a href="#">制作ログ（Notion）</a>
+      </div>
+      <div class="footer-copyright">
+        © 2026 東京百鬼パレード Project
+      </div>
+    </div>
+  </footer>
+
+  <!-- モーダル -->
+  <div class="modal-overlay" id="yokai-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modal-title">
+          <span id="modal-icon"></span>
+          <span id="modal-name"></span>
+        </h3>
+        <button class="modal-close" onclick="closeModal()">&times;</button>
+      </div>
+      <div class="modal-body" id="modal-body">
+        <!-- JSで動的生成 -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // データ格納
+    let yokaiData = [];
+    let wardsData = [];
+    let clansData = [];
+    
+    // 初期化
+    async function init() {
+      // データ読み込み
+      const [yokaiRes, wardsRes, clansRes] = await Promise.all([
+        fetch('data/yokai.json'),
+        fetch('data/wards.json'),
+        fetch('data/clans.json')
+      ]);
+      
+      const yokaiJson = await yokaiRes.json();
+      const wardsJson = await wardsRes.json();
+      const clansJson = await clansRes.json();
+      
+      yokaiData = yokaiJson.yokai;
+      wardsData = wardsJson.wards;
+      clansData = clansJson.clans;
+      
+      // フィルター選択肢を生成
+      populateFilters();
+      
+      // カード表示
+      renderCards(yokaiData);
+      
+      // イベントリスナー
+      setupEventListeners();
+      
+      // URLハッシュからスクロール
+      if (window.location.hash) {
+        const id = window.location.hash.slice(1);
+        setTimeout(() => {
+          const el = document.getElementById(id);
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 100);
+      }
+    }
+    
+    // フィルター選択肢を生成
+    function populateFilters() {
+      const wardSelect = document.getElementById('filter-ward');
+      const clanSelect = document.getElementById('filter-clan');
+      
+      // 区域
+      const uniqueWards = [...new Set(yokaiData.map(y => y.ward_id).filter(Boolean))];
+      uniqueWards.forEach(wardId => {
+        const ward = wardsData.find(w => w.id === wardId);
+        if (ward) {
+          const option = document.createElement('option');
+          option.value = wardId;
+          option.textContent = ward.name;
+          wardSelect.appendChild(option);
+        }
+      });
+      
+      // 勢力
+      clansData.forEach(clan => {
+        const option = document.createElement('option');
+        option.value = clan.id;
+        option.textContent = `${clan.icon} ${clan.name}`;
+        clanSelect.appendChild(option);
+      });
+    }
+    
+    // カード表示
+    function renderCards(data) {
+      const grid = document.getElementById('yokai-grid');
+      const emptyState = document.getElementById('empty-state');
+      const resultCount = document.getElementById('result-count');
+      
+      if (data.length === 0) {
+        grid.innerHTML = '';
+        emptyState.style.display = 'block';
+        resultCount.textContent = '';
+        return;
+      }
+      
+      emptyState.style.display = 'none';
+      resultCount.textContent = `${data.length}体の妖怪`;
+      
+      grid.innerHTML = data.map(yokai => {
+        const clan = clansData.find(c => c.id === yokai.clan_id);
+        const ward = wardsData.find(w => w.id === yokai.ward_id);
+        const icon = clan ? clan.icon : '👹';
+        const color = clan ? clan.color : '#d4af37';
+        
+        // 最大パワー
+        const maxPower = yokai.power_levels 
+          ? Math.max(...Object.values(yokai.power_levels))
+          : 0;
+        
+        return `
+          <div class="card yokai-card fade-in" id="${yokai.id}" style="--card-accent: ${color};">
+            <div class="yokai-header">
+              <div class="yokai-icon">${icon}</div>
+              <div class="yokai-title-group">
+                <div class="yokai-name">${yokai.name}</div>
+                <div class="yokai-reading">${yokai.name_reading}${yokai.nickname ? ` / ${yokai.nickname}` : ''}</div>
+              </div>
+            </div>
+            
+            <div class="yokai-meta">
+              <span class="yokai-meta-item">📍 ${yokai.location}</span>
+              <span class="yokai-meta-item">🏷️ ${yokai.species}</span>
+              ${clan ? `<span class="yokai-meta-item">${clan.icon} ${clan.name}</span>` : ''}
+            </div>
+            
+            <div class="yokai-kotowari">
+              「${yokai.kotowari}」
+            </div>
+            
+            <div class="yokai-summary">
+              ${yokai.summary}
+            </div>
+            
+            <div class="yokai-stats">
+              <div class="stat-item">
+                <div class="stat-label">見た目年齢</div>
+                <div class="stat-value">${yokai.age_apparent}</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-label">実年齢</div>
+                <div class="stat-value">${yokai.age_real}</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-label">最大戦闘力</div>
+                <div class="stat-value">${maxPower}</div>
+              </div>
+            </div>
+            
+            <div class="card-tags">
+              ${yokai.tags.slice(0, 5).map(tag => `<span class="tag">${tag}</span>`).join('')}
+            </div>
+            
+            <a href="#" class="yokai-link" onclick="openYokaiModal('${yokai.id}'); return false;">
+              詳細を見る →
+            </a>
+          </div>
+        `;
+      }).join('');
+    }
+    
+    // イベントリスナー設定
+    function setupEventListeners() {
+      const wardFilter = document.getElementById('filter-ward');
+      const clanFilter = document.getElementById('filter-clan');
+      const roleFilter = document.getElementById('filter-role');
+      const searchInput = document.getElementById('search-input');
+      
+      const applyFilters = () => {
+        const wardValue = wardFilter.value;
+        const clanValue = clanFilter.value;
+        const roleValue = roleFilter.value;
+        const searchValue = searchInput.value.toLowerCase();
+        
+        let filtered = yokaiData;
+        
+        if (wardValue) {
+          filtered = filtered.filter(y => y.ward_id === wardValue);
+        }
+        
+        if (clanValue) {
+          filtered = filtered.filter(y => y.clan_id === clanValue);
+        }
+        
+        if (roleValue) {
+          filtered = filtered.filter(y => y.role_category === roleValue);
+        }
+        
+        if (searchValue) {
+          filtered = filtered.filter(y => 
+            y.name.toLowerCase().includes(searchValue) ||
+            y.name_reading.toLowerCase().includes(searchValue) ||
+            y.species.toLowerCase().includes(searchValue) ||
+            (y.nickname && y.nickname.toLowerCase().includes(searchValue))
+          );
+        }
+        
+        renderCards(filtered);
+      };
+      
+      wardFilter.addEventListener('change', applyFilters);
+      clanFilter.addEventListener('change', applyFilters);
+      roleFilter.addEventListener('change', applyFilters);
+      searchInput.addEventListener('input', applyFilters);
+    }
+    
+    // 妖怪モーダルを開く
+    function openYokaiModal(yokaiId) {
+      const yokai = yokaiData.find(y => y.id === yokaiId);
+      if (!yokai) return;
+      
+      const clan = clansData.find(c => c.id === yokai.clan_id);
+      
+      document.getElementById('modal-icon').textContent = clan ? clan.icon : '👹';
+      document.getElementById('modal-name').textContent = `${yokai.name}（${yokai.name_reading}）`;
+      
+      const powerLevels = Object.entries(yokai.power_levels || {})
+        .map(([k, v]) => `<li>${k}: ${v}</li>`)
+        .join('');
+      
+      document.getElementById('modal-body').innerHTML = `
+        <div class="modal-section">
+          <div class="modal-section-title">基本情報</div>
+          <div class="modal-section-content">
+            <p><strong>管理番号:</strong> ${yokai.id}</p>
+            <p><strong>種族:</strong> ${yokai.species}</p>
+            <p><strong>所属:</strong> ${yokai.clan_name}</p>
+            <p><strong>拠点:</strong> ${yokai.location}（${yokai.ward_name}）</p>
+            <p><strong>年齢:</strong> 見た目 ${yokai.age_apparent} / 実年齢 ${yokai.age_real}</p>
+            ${yokai.attributes && yokai.attributes.length > 0 ? 
+              `<p><strong>属性:</strong> ${yokai.attributes.join('、')}</p>` : ''}
+          </div>
+        </div>
+        
+        <div class="modal-section">
+          <div class="modal-section-title">概要</div>
+          <div class="modal-section-content">
+            <p>${yokai.summary}</p>
+          </div>
+        </div>
+        
+        <div class="modal-section">
+          <div class="modal-section-title">勤・理・源</div>
+          <div class="modal-section-content">
+            <p><strong>勤（つとめ）:</strong> ${yokai.tsutome}</p>
+            <p><strong>理（ことわり）:</strong> ${yokai.kotowari}</p>
+            <p><strong>源（みなもと）:</strong> ${yokai.minamoto}</p>
+          </div>
+        </div>
+        
+        ${powerLevels ? `
+        <div class="modal-section">
+          <div class="modal-section-title">戦闘力</div>
+          <div class="modal-section-content">
+            <ul style="padding-left: var(--spacing-md);">
+              ${powerLevels}
+            </ul>
+          </div>
+        </div>
+        ` : ''}
+        
+        <div class="card-tags">
+          ${yokai.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
+        </div>
+        
+        ${yokai.coordinates ? `
+        <div style="margin-top: var(--spacing-lg);">
+          <a href="map.html" class="yokai-link">
+            マップで見る →
+          </a>
+        </div>
+        ` : ''}
+      `;
+      
+      document.getElementById('yokai-modal').classList.add('active');
+    }
+    
+    // モーダルを閉じる
+    function closeModal() {
+      document.getElementById('yokai-modal').classList.remove('active');
+    }
+    
+    // モーダル外クリックで閉じる
+    document.getElementById('yokai-modal').addEventListener('click', (e) => {
+      if (e.target.classList.contains('modal-overlay')) {
+        closeModal();
+      }
+    });
+    
+    // ESCキーで閉じる
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeModal();
+      }
+    });
+    
+    // 初期化実行
+    init();
+  </script>
+</body>
+</html>

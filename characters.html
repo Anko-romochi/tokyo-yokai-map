@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>キャラクター | 東京圏妖怪マッピングβ</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&family=Shippori+Mincho:wght@500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="css/style.css">
+  
+  <style>
+    .page-header {
+      text-align: center;
+      padding: var(--spacing-2xl) var(--spacing-lg);
+      background: var(--bg-secondary);
+    }
+    
+    .page-title {
+      font-family: var(--font-title);
+      font-size: 2.5rem;
+      margin-bottom: var(--spacing-md);
+    }
+    
+    .page-subtitle {
+      color: var(--text-secondary);
+      font-size: 1.1rem;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    
+    .characters-section {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: var(--spacing-2xl) var(--spacing-lg);
+    }
+    
+    .character-card-full {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: var(--spacing-xl);
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: var(--spacing-xl);
+      margin-bottom: var(--spacing-xl);
+      transition: all 0.3s ease;
+    }
+    
+    .character-card-full:hover {
+      border-color: var(--accent-gold);
+    }
+    
+    .character-visual {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--spacing-md);
+    }
+    
+    .character-icon-large {
+      font-size: 6rem;
+      width: 160px;
+      height: 160px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg);
+      border: 3px solid var(--border-color);
+    }
+    
+    .character-card-full[data-layer="山"] .character-icon-large {
+      border-color: #2C3E50;
+      background: linear-gradient(135deg, rgba(44, 62, 80, 0.2), transparent);
+    }
+    
+    .character-card-full[data-layer="街"] .character-icon-large {
+      border-color: #E74C3C;
+      background: linear-gradient(135deg, rgba(231, 76, 60, 0.2), transparent);
+    }
+    
+    .character-card-full[data-layer="川"] .character-icon-large {
+      border-color: #3498DB;
+      background: linear-gradient(135deg, rgba(52, 152, 219, 0.2), transparent);
+    }
+    
+    .character-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--spacing-xs);
+      justify-content: center;
+    }
+    
+    .character-tag {
+      padding: 4px 10px;
+      background: var(--bg-secondary);
+      border-radius: 20px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+    
+    .character-details {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-md);
+    }
+    
+    .character-header {
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: var(--spacing-md);
+    }
+    
+    .character-name {
+      font-family: var(--font-title);
+      font-size: 2rem;
+      margin-bottom: 4px;
+    }
+    
+    .character-name-reading {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+    
+    .character-species {
+      font-size: 1rem;
+      color: var(--accent-gold);
+      margin-top: var(--spacing-sm);
+    }
+    
+    .character-meta {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--spacing-sm);
+    }
+    
+    .meta-item {
+      padding: var(--spacing-sm);
+      background: var(--bg-secondary);
+      border-radius: var(--radius-sm);
+    }
+    
+    .meta-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-bottom: 2px;
+    }
+    
+    .meta-value {
+      font-size: 0.9rem;
+    }
+    
+    .character-kotowari {
+      font-family: var(--font-title);
+      font-size: 1.2rem;
+      color: var(--accent-gold);
+      text-align: center;
+      padding: var(--spacing-md);
+      background: rgba(212, 175, 55, 0.08);
+      border-radius: var(--radius-md);
+      border-left: 4px solid var(--accent-gold);
+    }
+    
+    .character-summary {
+      font-size: 0.95rem;
+      line-height: 1.8;
+      color: var(--text-secondary);
+    }
+    
+    .character-innen {
+      padding: var(--spacing-md);
+      background: var(--bg-secondary);
+      border-radius: var(--radius-md);
+    }
+    
+    .innen-title {
+      font-family: var(--font-title);
+      font-size: 1rem;
+      margin-bottom: var(--spacing-sm);
+      color: var(--text-primary);
+    }
+    
+    .innen-content {
+      font-size: 0.9rem;
+      line-height: 1.7;
+      color: var(--text-secondary);
+    }
+    
+    .character-links {
+      display: flex;
+      gap: var(--spacing-md);
+      padding-top: var(--spacing-md);
+      border-top: 1px solid var(--border-color);
+    }
+    
+    .char-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: var(--spacing-sm) var(--spacing-md);
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      transition: all 0.2s ease;
+    }
+    
+    .char-link:hover {
+      border-color: var(--accent-gold);
+      color: var(--accent-gold);
+    }
+    
+    @media (max-width: 768px) {
+      .character-card-full {
+        grid-template-columns: 1fr;
+      }
+      
+      .character-meta {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- ヘッダー -->
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="index.html" class="site-logo">
+        <span class="logo-icon">👹</span>
+        <h1>東京百鬼パレード</h1>
+      </a>
+      <nav class="main-nav">
+        <ul>
+          <li><a href="index.html">トップ</a></li>
+          <li><a href="map.html">マップ</a></li>
+          <li><a href="characters.html" class="active">キャラクター</a></li>
+          <li><a href="lore.html">世界観</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <!-- メインコンテンツ -->
+  <main class="main-content">
+    <div class="page-header">
+      <h1 class="page-title">👤 キャラクター</h1>
+      <p class="page-subtitle">
+        東京圏を守護する3人の妖怪たち。<br>
+        山・街・川——それぞれの領域で、それぞれの「理」を持って生きている。
+      </p>
+    </div>
+    
+    <section class="characters-section" id="characters-container">
+      <!-- JSで動的生成 -->
+    </section>
+  </main>
+
+  <!-- フッター -->
+  <footer class="site-footer">
+    <div class="footer-content">
+      <div class="footer-title">東京百鬼パレード</div>
+      <div class="footer-links">
+        <a href="map.html">マップ</a>
+        <a href="characters.html">キャラクター</a>
+        <a href="lore.html">世界観</a>
+        <a href="#">制作ログ（Notion）</a>
+      </div>
+      <div class="footer-copyright">
+        © 2026 東京百鬼パレード Project
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    async function init() {
+      try {
+        const [charactersRes, locationsRes] = await Promise.all([
+          fetch('data/characters.json'),
+          fetch('data/locations.json')
+        ]);
+        
+        const charactersData = (await charactersRes.json()).characters;
+        const locationsData = (await locationsRes.json()).locations;
+        
+        renderCharacters(charactersData, locationsData);
+        
+        // ハッシュがあればスクロール
+        if (window.location.hash) {
+          const targetId = window.location.hash.slice(1);
+          setTimeout(() => {
+            const target = document.getElementById(targetId);
+            if (target) {
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+          }, 100);
+        }
+      } catch (error) {
+        console.error('データ読み込みエラー:', error);
+      }
+    }
+    
+    function renderCharacters(characters, locations) {
+      const container = document.getElementById('characters-container');
+      
+      container.innerHTML = characters.map(char => {
+        const loc = locations.find(l => l.id === char.location_id);
+        
+        return `
+          <article class="character-card-full" id="${char.id}" data-layer="${char.layer}">
+            <div class="character-visual">
+              <div class="character-icon-large">${char.icon}</div>
+              <div class="character-tags">
+                ${char.tags.map(tag => `<span class="character-tag">${tag}</span>`).join('')}
+              </div>
+            </div>
+            
+            <div class="character-details">
+              <div class="character-header">
+                <h2 class="character-name">${char.name}${char.nickname ? `（${char.nickname}）` : ''}</h2>
+                <div class="character-name-reading">${char.name_reading} / ${char.name_en}</div>
+                <div class="character-species">${char.species}（${char.species_en}）/ ${char.clan}</div>
+              </div>
+              
+              <div class="character-meta">
+                <div class="meta-item">
+                  <div class="meta-label">領域</div>
+                  <div class="meta-value">${char.location}（${char.layer}・${loc ? loc.layer_concept : ''}）</div>
+                </div>
+                <div class="meta-item">
+                  <div class="meta-label">役職</div>
+                  <div class="meta-value">${char.role}</div>
+                </div>
+                <div class="meta-item">
+                  <div class="meta-label">外見年齢</div>
+                  <div class="meta-value">${char.age_apparent}</div>
+                </div>
+                <div class="meta-item">
+                  <div class="meta-label">実年齢</div>
+                  <div class="meta-value">${char.age_real}</div>
+                </div>
+                <div class="meta-item">
+                  <div class="meta-label">勤（つとめ）</div>
+                  <div class="meta-value">${char.tsutome}</div>
+                </div>
+                <div class="meta-item">
+                  <div class="meta-label">源（みなもと）</div>
+                  <div class="meta-value">${char.minamoto}</div>
+                </div>
+              </div>
+              
+              <div class="character-kotowari">
+                「${char.kotowari}」
+              </div>
+              
+              <div class="character-summary">
+                ${char.summary}
+              </div>
+              
+              <div class="character-innen">
+                <div class="innen-title">📜 因縁</div>
+                <div class="innen-content">${char.innen}</div>
+              </div>
+              
+              <div class="character-links">
+                <a href="map.html" class="char-link" onclick="localStorage.setItem('focusLocation', '${char.location_id}')">
+                  🗺️ マップで見る
+                </a>
+                <a href="lore.html#layer-${char.layer}" class="char-link">
+                  📖 ${char.layer}のレイヤー
+                </a>
+              </div>
+            </div>
+          </article>
+        `;
+      }).join('');
+    }
+    
+    init();
+  </script>
+</body>
+</html>
