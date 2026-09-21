@@ -20,9 +20,10 @@ jobs:
           import datetime, hashlib, html, json, os, re, urllib.request
           source = os.environ['SOURCE']
           mirror = os.environ['MIRROR']
-          page = urllib.request.urlopen(source + '/hyakkei').read().decode()
+          fetch = lambda url: urllib.request.urlopen(urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})).read().decode()
+          page = fetch(source + '/hyakkei')
           module_path = re.search(r'src="([^"]+yokai-hyakkei[^"]+\.js)"', page).group(1)
-          js = urllib.request.urlopen(source + module_path).read().decode()
+          js = fetch(source + module_path)
           tick = chr(96)
           pattern = re.compile(r'\{id:' + tick + r'([^' + tick + r']*)' + tick + r',name:' + tick + r'([^' + tick + r']*)' + tick + r',reading:' + tick + r'([^' + tick + r']*)' + tick + r',body:' + tick + r'([^' + tick + r']*)' + tick + r',number_kanji:' + tick + r'([^' + tick + r']*)' + tick + r',image:' + tick + r'([^' + tick + r']*)' + tick + r',thumbnail:' + tick + r'([^' + tick + r']*)' + tick + r',art_revision:' + tick + r'([^' + tick + r']*)' + tick + r',character_id:(null|' + tick + r'[^' + tick + r']*' + tick + r')\}', re.S)
           entries = []
