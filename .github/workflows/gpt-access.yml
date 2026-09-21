@@ -1,0 +1,60 @@
+name: Build GPT access data
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-gpt-access:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate static GPT-readable data
+        env:
+          SOURCE: https://studio-anko.studio-anko.chatgpt.site
+          MIRROR: https://anko-romochi.github.io/tokyo-yokai-map
+        run: |
+          python - <<'PY'
+          import datetime, hashlib, html, json, os, re, urllib.request
+          source = os.environ['SOURCE']
+          mirror = os.environ['MIRROR']
+          page = urllib.request.urlopen(source + '/hyakkei').read().decode()
+          module_path = re.search(r'src="([^"]+yokai-hyakkei[^"]+\.js)"', page).group(1)
+          js = urllib.request.urlopen(source + module_path).read().decode()
+          tick = chr(96)
+          pattern = re.compile(r'\{id:' + tick + r'([^' + tick + r']*)' + tick + r',name:' + tick + r'([^' + tick + r']*)' + tick + r',reading:' + tick + r'([^' + tick + r']*)' + tick + r',body:' + tick + r'([^' + tick + r']*)' + tick + r',number_kanji:' + tick + r'([^' + tick + r']*)' + tick + r',image:' + tick + r'([^' + tick + r']*)' + tick + r',thumbnail:' + tick + r'([^' + tick + r']*)' + tick + r',art_revision:' + tick + r'([^' + tick + r']*)' + tick + r',character_id:(null|' + tick + r'[^' + tick + r']*' + tick + r')\}', re.S)
+          entries = []
+          for match in pattern.finditer(js):
+              ident, name, reading, body, number_kanji, image, thumbnail, art_revision, character_id = match.groups()
+              entries.append({'id': ident, 'name': name, 'reading': reading, 'body': body, 'number_kanji': number_kanji, 'image': image, 'thumbnail': thumbnail, 'art_revision': art_revision, 'character_id': None if character_id == 'null' else character_id[1:-1]})
+          if len(entries) != 100:
+              raise SystemExit(f'expected 100 entries, got {len(entries)}')
+          data = {'title': '妖怪百景', 'entries': entries}
+          os.makedirs('data', exist_ok=True)
+          os.makedirs('hyakkei', exist_ok=True)
+          with open('data/hyakkei.json', 'w', encoding='utf-8') as f:
+              json.dump(data, f, ensure_ascii=False, indent=2)
+              f.write('\n')
+          source_commit = re.search(r'name="studio-anko-build-id" content="([^"]+)"', page).group(1)
+          dataset_version = hashlib.sha256(json.dumps(data, ensure_ascii=False, sort_keys=True).encode()).hexdigest()[:16]
+          info = {'buildTimestamp': datetime.datetime.now(datetime.timezone.utc).isoformat(), 'sourceCommit': source_commit, 'datasetVersion': dataset_version, 'sourcePage': source + '/hyakkei', 'entryCount': len(entries)}
+          with open('build-info.json', 'w', encoding='utf-8') as f:
+              json.dump(info, f, ensure_ascii=False, indent=2)
+              f.write('\n')
+          cards = []
+          for e in entries:
+              cards.append(f"<article id='{html.escape(e['id'])}'><h2>第{html.escape(e['number_kanji'])}景 {html.escape(e['name'])}</h2><p>{html.escape(e['reading'])}</p><p>{html.escape(e['body'])}</p><p>image: {html.escape(source + e['image'])}</p></article>")
+          document = '<!doctype html><html lang="ja"><head><meta charset="utf-8"><title>妖怪百景｜東京百鬼パレード</title></head><body><h1>妖怪百景</h1><p>東京百鬼パレードの妖怪100景。静的HTMLミラー。</p>' + ''.join(cards) + '</body></html>'
+          with open('hyakkei/index.html', 'w', encoding='utf-8') as f:
+              f.write(document)
+          with open('sitemap.xml', 'w', encoding='utf-8') as f:
+              f.write(f'<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>{mirror}/</loc></url><url><loc>{mirror}/hyakkei/</loc></url><url><loc>{mirror}/data/hyakkei.json</loc></url><url><loc>{mirror}/build-info.json</loc></url></urlset>')
+          PY
+      - name: Commit generated GPT access surface
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add data/hyakkei.json hyakkei/index.html build-info.json sitemap.xml
+          git diff --cached --quiet || (git commit -m "Build GPT-readable THP data" && git push)
