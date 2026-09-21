@@ -25,11 +25,15 @@ jobs:
           module_path = re.search(r'(?:src|href)="([^"]+yokai-hyakkei[^"]+\.js)"', page).group(1)
           js = fetch(source + module_path)
           tick = chr(96)
-          pattern = re.compile(r'\{id:' + tick + r'([^' + tick + r']*)' + tick + r',name:' + tick + r'([^' + tick + r']*)' + tick + r',reading:' + tick + r'([^' + tick + r']*)' + tick + r',body:' + tick + r'([^' + tick + r']*)' + tick + r',number_kanji:' + tick + r'([^' + tick + r']*)' + tick + r',image:' + tick + r'([^' + tick + r']*)' + tick + r',thumbnail:' + tick + r'([^' + tick + r']*)' + tick + r',art_revision:' + tick + r'([^' + tick + r']*)' + tick + r',character_id:(null|' + tick + r'[^' + tick + r']*' + tick + r')\}', re.S)
+          entries_blob = re.search(r'entries:\[(.*)\]\};export', js, re.S).group(1)
+          blocks = re.split(r'\},\{id:', entries_blob)
+          blocks = [blocks[0]] + ['{id:' + b for b in blocks[1:]]
+          def value(block, name):
+              return re.search(name + ':' + tick + r'(.*?)' + tick, block, re.S).group(1)
           entries = []
-          for match in pattern.finditer(js):
-              ident, name, reading, body, number_kanji, image, thumbnail, art_revision, character_id = match.groups()
-              entries.append({'id': ident, 'name': name, 'reading': reading, 'body': body, 'number_kanji': number_kanji, 'image': image, 'thumbnail': thumbnail, 'art_revision': art_revision, 'character_id': None if character_id == 'null' else character_id[1:-1]})
+          for block in blocks:
+              character_match = re.search(r'character_id:(null|' + tick + r'(.*?)' + tick + r')', block, re.S)
+              entries.append({'id': value(block, 'id'), 'name': value(block, 'name'), 'reading': value(block, 'reading'), 'body': value(block, 'body'), 'number_kanji': value(block, 'number_kanji'), 'image': value(block, 'image'), 'thumbnail': value(block, 'thumbnail'), 'art_revision': value(block, 'art_revision'), 'character_id': None if character_match.group(1) == 'null' else character_match.group(2)})
           if len(entries) != 100:
               raise SystemExit(f'expected 100 entries, got {len(entries)}')
           data = {'title': '妖怪百景', 'entries': entries}
